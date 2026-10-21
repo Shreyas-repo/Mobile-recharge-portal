@@ -37,18 +37,16 @@ public class RechargeSeleniumTest {
     void setUp() {
         baseUrl = "http://localhost:" + port;
 
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--remote-allow-origins=*", "--window-size=1920,1080", "--disable-gpu");
+
         try {
             WebDriverManager.chromedriver().setup();
-            ChromeOptions options = new ChromeOptions();
-            options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--remote-allow-origins=*", "--window-size=1920,1080");
-            driver = new ChromeDriver(options);
         } catch (Exception e) {
-            // Fallback to Edge
-            WebDriverManager.edgedriver().setup();
-            EdgeOptions edgeOptions = new EdgeOptions();
-            edgeOptions.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080");
-            driver = new EdgeDriver(edgeOptions);
+            System.out.println("[SELENIUM] WebDriverManager note: " + e.getMessage() + ". Relying on native Selenium 4 Manager.");
         }
+
+        driver = new ChromeDriver(options);
 
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
