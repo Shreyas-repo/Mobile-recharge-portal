@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard | PayPulse MRP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --surface: #131b2e;
+            --surface-card: #1c2640;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.35);
+            --text-main: #f8fafc;
+            --border-subtle: #2d3748;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 24px;
+            transition: all 0.25s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+            <i class="fa-solid fa-tower-cell text-primary fs-4"></i>
+            <span>PayPulse <span class="badge bg-primary fs-7">MRP</span></span>
+        </a>
+        <div class="collapse navbar-collapse show" id="navContent">
+            <ul class="navbar-nav ms-auto align-items-center gap-3">
+                <li class="nav-item"><a class="nav-link" href="/"><i class="fa-solid fa-house me-1"></i> Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/transactions"><i class="fa-solid fa-list-check me-1"></i> Ledger</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/admin/dashboard"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold mb-1">Executive Analytics Dashboard</h2>
+            <p class="text-secondary small mb-0">Real-time platform throughput, financial metrics, and network distribution</p>
+        </div>
+        <a href="/admin/transactions" class="btn btn-primary rounded-3 px-4">
+            <i class="fa-solid fa-receipt me-2"></i> View Full Ledger
+        </a>
+    </div>
+
+    <!-- KPI Cards Row -->
+    <div class="row g-4 mb-5">
+        <!-- Total Transactions -->
+        <div class="col-md-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Total Recharges</span>
+                    <div class="kpi-icon bg-primary-subtle text-primary">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold mb-1" id="kpi-total-count" th:text="${metrics.totalCount}"></h2>
+                <span class="text-success small"><i class="fa-solid fa-arrow-trend-up me-1"></i>Live Stream</span>
+            </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="col-md-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Gross Revenue</span>
+                    <div class="kpi-icon bg-success-subtle text-success">
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold mb-1 text-success">₹<span id="kpi-total-revenue" th:text="${metrics.totalRevenue}"></span></h2>
+                <span class="text-secondary small">Processed settlements</span>
+            </div>
+        </div>
+
+        <!-- Success Rate -->
+        <div class="col-md-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Success Rate</span>
+                    <div class="kpi-icon bg-info-subtle text-info">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold mb-1" id="kpi-success-rate"><span th:text="${metrics.successRate}"></span>%</h2>
+                <span class="text-info small"><i class="fa-solid fa-shield-halved me-1"></i>High SLA target</span>
+            </div>
+        </div>
+
+        <!-- Pending Audit -->
+        <div class="col-md-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Pending Audits</span>
+                    <div class="kpi-icon bg-warning-subtle text-warning">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold mb-1 text-warning" id="kpi-pending-count" th:text="${metrics.pendingCount}"></h2>
+                <span class="text-secondary small">Requires operator ACK</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Visual Cards -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="kpi-card h-100">
+                <h5 class="fw-bold mb-4"><i class="fa-solid fa-chart-column text-primary me-2"></i>Network Operator Distribution</h5>
+                <div th:each="entry : ${metrics.operatorBreakdown}" class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold" th:text="${entry.key}"></span>
+                        <span class="text-secondary small" th:text="${entry.value} + ' transactions'"></span>
+                    </div>
+                    <div class="progress" style="height: 10px; background-color: #192238;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             th:style="'width: ' + (${metrics.totalCount > 0} ? (${entry.value} * 100.0 / ${metrics.totalCount}) : 0) + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="kpi-card h-100">
+                <h5 class="fw-bold mb-3"><i class="fa-solid fa-server text-success me-2"></i>DevOps & Runtime Health</h5>
+                <ul class="list-group list-group-flush bg-transparent">
+                    <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                        <span>Application Status</span>
+                        <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>UP</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                        <span>Database Engine</span>
+                        <span class="text-light">H2 In-Memory v2.2</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                        <span>Deployment Container</span>
+                        <span class="text-light">Embedded Apache Tomcat 10.1</span>
+                    </li>
+                    <li class="list-group-item bg-transparent text-secondary border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                        <span>Continuous Integration</span>
+                        <span class="text-light">Jenkinsfile Declarative Pipeline</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

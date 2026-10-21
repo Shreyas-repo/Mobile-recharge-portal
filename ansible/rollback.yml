@@ -1,0 +1,45 @@
+---
+- name: Emergency Rollback of Mobile Recharge Portal to Previous Stable Baseline
+  hosts: recharge_servers
+  become: yes
+  vars:
+    app_user: mrpuser
+    app_group: mrpuser
+    app_dir: /opt/mobile-recharge-portal
+    app_port: 8080
+    target_jar_path: "{{ app_dir }}/mobile-recharge-portal-1.0.0-SNAPSHOT.jar"
+    backup_jar_path: "{{ app_dir }}/app-previous-stable.jar"
+
+  tasks:
+    - name: 1. Verify backup previous stable artifact exists
+      stat:
+        path: "{{ backup_jar_path }}"
+      register: backup_stat
+      failed_when: not backup_stat.stat.exists
+
+    - name: 2. Restore previous stable artifact
+      copy:
+        remote_src: yes
+        src: "{{ backup_jar_path }}"
+        dest: "{{ target_jar_path }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+
+    - name: 3. Restart MRP service with previous baseline
+      systemd:
+        name: mrp
+        state: restarted
+
+    - name: 4. Validate health check post-rollback
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/api/health"
+        status_code: 200
+      register: rollback_health
+      until: rollback_health.status == 200
+      retries: 5
+      delay: 3
+
+    - name: 5. Confirm recovery
+      debug:
+        msg: "Rollback successful! Previous stable release is active and passing health checks."

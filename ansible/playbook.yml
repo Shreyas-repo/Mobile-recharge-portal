@@ -1,0 +1,129 @@
+---
+- name: Automated Provisioning & Deployment of Mobile Recharge Portal
+  hosts: recharge_servers
+  become: yes
+  vars:
+    app_user: mrpuser
+    app_group: mrpuser
+    app_dir: /opt/mobile-recharge-portal
+    app_port: 8080
+    jar_file: mobile-recharge-portal-1.0.0-SNAPSHOT.jar
+    target_jar_path: "{{ app_dir }}/{{ jar_file }}"
+    backup_jar_path: "{{ app_dir }}/app-previous-stable.jar"
+
+  tasks:
+    - name: 1. Ensure system prerequisites are installed
+      apt:
+        name:
+          - openjdk-21-jre-headless
+          - curl
+          - ufw
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: 2. Create service group
+      group:
+        name: "{{ app_group }}"
+        state: present
+
+    - name: 3. Create service dedicated user
+      user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        shell: /usr/sbin/nologin
+        system: yes
+        state: present
+
+    - name: 4. Create application and log directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - /var/log/mobile-recharge-portal
+
+    - name: 5. Backup current artifact if it exists for rollback safety
+      copy:
+        remote_src: yes
+        src: "{{ target_jar_path }}"
+        dest: "{{ backup_jar_path }}"
+      ignore_errors: yes
+
+    - name: 6. Deploy fresh application JAR artifact
+      copy:
+        src: "../target/{{ jar_file }}"
+        dest: "{{ target_jar_path }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+      notify: Restart MRP Service
+
+    - name: 7. Deploy Systemd service unit file
+      copy:
+        dest: /etc/systemd/system/mrp.service
+        content: |
+          [Unit]
+          Description=Mobile Recharge Portal Spring Boot Service
+          After=network.target
+
+          [Service]
+          User={{ app_user }}
+          Group={{ app_group }}
+          WorkingDirectory={{ app_dir }}
+          ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar {{ target_jar_path }}
+          SuccessExitStatus=143
+          Restart=always
+          RestartSec=10
+          StandardOutput=append:/var/log/mobile-recharge-portal/console.log
+          StandardError=append:/var/log/mobile-recharge-portal/error.log
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify:
+        - Reload Systemd
+        - Restart MRP Service
+
+    - name: 8. Ensure MRP service is enabled and started (Idempotency)
+      systemd:
+        name: mrp
+        enabled: yes
+        state: started
+
+    - name: 9. Allow inbound traffic on application port
+      ufw:
+        rule: allow
+        port: "{{ app_port }}"
+        proto: tcp
+      when: ansible_os_family == "Debian"
+
+    - name: 10. Validate deployment with automated health check
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/api/health"
+        status_code: 200
+        return_content: yes
+      register: health_result
+      until: health_result.status == 200
+      retries: 10
+      delay: 5
+
+    - name: 11. Assert health check response body
+      assert:
+        that:
+          - "'UP' in health_result.content"
+        fail_msg: "Application health check failed!"
+        success_msg: "Mobile Recharge Portal is UP and fully operational!"
+
+  handlers:
+    - name: Reload Systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart MRP Service
+      systemd:
+        name: mrp
+        state: restarted

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Recharge Portal | Instant Prepaid Top-Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --surface: #131b2e;
+            --surface-card: #1c2640;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-subtle: #2d3748;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .glass-card {
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .plan-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            transition: all 0.25s ease;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 12px 24px var(--accent-glow);
+        }
+
+        .btn-brand {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-brand:hover {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            box-shadow: 0 6px 18px var(--accent-glow);
+            color: white;
+        }
+
+        .operator-pill {
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .operator-pill.active, .operator-pill:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .form-control-custom, .form-select-custom {
+            background: #0f172a;
+            border: 1px solid var(--border-subtle);
+            color: white;
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+
+        .form-control-custom:focus, .form-select-custom:focus {
+            background: #0f172a;
+            border-color: var(--accent-primary);
+            color: white;
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+            <i class="fa-solid fa-tower-cell text-primary fs-4"></i>
+            <span>PayPulse <span class="badge bg-primary fs-7">MRP</span></span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav ms-auto align-items-center gap-3">
+                <li class="nav-item"><a class="nav-link active" href="/"><i class="fa-solid fa-house me-1"></i> Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/transactions" id="nav-ledger"><i class="fa-solid fa-list-check me-1"></i> Ledger</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/dashboard" id="nav-dashboard"><i class="fa-solid fa-chart-pie me-1"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/api/health" target="_blank"><span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-heart-pulse me-1"></i> Health</span></a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <!-- Alerts -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
+        <i class="fa-solid fa-circle-exclamation me-2"></i> <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show rounded-4" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i> <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Hero & Quick Recharge Form -->
+    <div class="row g-4 align-items-center mb-5">
+        <div class="col-lg-7">
+            <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 rounded-pill fw-semibold mb-3">
+                <i class="fa-solid fa-bolt me-1"></i> Lightning Fast Telecom Top-Up
+            </span>
+            <h1 class="display-5 fw-bold mb-3">Recharge Any Prepaid Mobile in Seconds</h1>
+            <p class="text-secondary fs-5 mb-4">
+                Instant digital recharge across India's top telecom networks. Zero convenience fee, 100% verified gateway response.
+            </p>
+            <div class="d-flex gap-4 text-secondary small">
+                <div><i class="fa-solid fa-shield-halved text-success me-2"></i>Bank Grade Security</div>
+                <div><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Instant Confirmation</div>
+                <div><i class="fa-solid fa-headset text-warning me-2"></i>24/7 Audit Ledger</div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="glass-card p-4">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-mobile-screen-button text-primary me-2"></i>Instant Recharge</h4>
+                <form action="/recharge" method="POST" id="recharge-form">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Mobile Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-secondary">+91</span>
+                            <input type="tel" name="mobileNumber" id="mobileNumber" class="form-control form-control-custom"
+                                   placeholder="10-digit mobile number" pattern="^[6-9]\d{9}$" maxlength="10" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Select Operator</label>
+                        <select name="operator" id="operatorSelect" class="form-select form-select-custom">
+                            <option value="Airtel">Airtel</option>
+                            <option value="Jio">Reliance Jio</option>
+                            <option value="Vi">Vodafone Idea (Vi)</option>
+                            <option value="BSNL">BSNL</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-semibold">Selected Plan / Amount (₹)</label>
+                        <input type="number" name="customAmount" id="customAmount" class="form-control form-control-custom"
+                               placeholder="e.g. 299" min="10" required>
+                        <input type="hidden" name="planId" id="planId" value="">
+                    </div>
+
+                    <button type="submit" id="btn-submit-recharge" class="btn btn-brand w-100 py-3 mt-2">
+                        <i class="fa-solid fa-credit-card me-2"></i> Proceed to Recharge
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Catalog Header & Filter Pills -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h3 class="fw-bold mb-1">Browse Recharge Plans</h3>
+            <p class="text-secondary small mb-0">Select your operator to view curated data, voice, and long-validity packs</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/?operator=All" class="operator-pill" th:classappend="${currentOperator == 'All'} ? 'active' : ''">All Networks</a>
+            <a href="/?operator=Airtel" class="operator-pill" th:classappend="${currentOperator == 'Airtel'} ? 'active' : ''">Airtel</a>
+            <a href="/?operator=Jio" class="operator-pill" th:classappend="${currentOperator == 'Jio'} ? 'active' : ''">Jio</a>
+            <a href="/?operator=Vi" class="operator-pill" th:classappend="${currentOperator == 'Vi'} ? 'active' : ''">Vi</a>
+            <a href="/?operator=BSNL" class="operator-pill" th:classappend="${currentOperator == 'BSNL'} ? 'active' : ''">BSNL</a>
+        </div>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="row g-4" id="plans-grid">
+        <div class="col-md-6 col-lg-3" th:each="plan : ${plans}">
+            <div class="plan-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-secondary-subtle text-light px-2 py-1 rounded" th:text="${plan.operator}"></span>
+                        <span class="badge bg-primary text-white" th:text="${plan.category}"></span>
+                    </div>
+                    <h2 class="fw-bold my-2 text-primary">₹<span th:text="${#numbers.formatDecimal(plan.amount, 0, 0)}"></span></h2>
+                    <h5 class="fw-semibold mb-2" th:text="${plan.planName}"></h5>
+                    <div class="text-secondary small mb-3">
+                        <div><i class="fa-regular fa-calendar-check text-info me-2"></i>Validity: <strong class="text-light" th:text="${plan.validityDays} + ' Days'"></strong></div>
+                        <div><i class="fa-solid fa-wifi text-success me-2"></i>Data: <strong class="text-light" th:text="${plan.dataBenefit}"></strong></div>
+                    </div>
+                    <p class="text-muted small" th:text="${plan.description}"></p>
+                </div>
+                <button type="button" class="btn btn-outline-primary w-100 rounded-3 mt-3 select-plan-btn"
+                        th:data-id="${plan.id}"
+                        th:data-amount="${plan.amount}"
+                        th:data-operator="${plan.operator}"
+                        onclick="selectPlan(this)">
+                    <i class="fa-solid fa-check me-1"></i> Choose Plan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="mt-5 py-4 border-top border-secondary border-opacity-25 text-center text-secondary small">
+    <div class="container">
+        <p class="mb-1">Mobile Recharge Portal (MRP) &copy; 2026 &bull; DevOps CI/CD Showcase</p>
+        <p class="mb-0">Powered by Spring Boot 3 &bull; Maven &bull; Docker &bull; Jenkins &bull; Selenium &bull; Ansible</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function selectPlan(btn) {
+        const id = btn.getAttribute('data-id');
+        const amount = btn.getAttribute('data-amount');
+        const operator = btn.getAttribute('data-operator');
+
+        document.getElementById('planId').value = id;
+        document.getElementById('customAmount').value = amount;
+        
+        const opSelect = document.getElementById('operatorSelect');
+        for (let i = 0; i < opSelect.options.length; i++) {
+            if (opSelect.options[i].value.toLowerCase() === operator.toLowerCase()) {
+                opSelect.selectedIndex = i;
+                break;
+            }
+        }
+
+        // Scroll to form and highlight mobile number input
+        document.getElementById('mobileNumber').focus();
+        document.getElementById('recharge-form').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
